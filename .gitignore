@@ -1,0 +1,12 @@
+Dependency directories
+
+/node_modules
+
+Environment variables (contains your bot token/secrets)
+
+.env
+
+Configuration files that are generated during runtime
+
+config.json
+nicknameHistory.json
