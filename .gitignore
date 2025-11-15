@@ -10,3 +10,4 @@ Configuration files that are generated during runtime
 
 config.json
 nicknameHistory.json
+package-lock.json
