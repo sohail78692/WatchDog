@@ -339,6 +339,58 @@ function setupCommands() {
         }
     });
 
+    // !purge command
+    client.commands.set('purge', {
+        name: 'purge',
+        description: 'Deletes recent messages in this channel. Usage: !purge <1-1000>.',
+        permissions: PermissionsBitField.Flags.ManageMessages,
+        execute: async (message, args) => {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                return message.reply('❌ You do not have permission to manage messages.');
+            }
+
+            const botMember = message.guild.members.me;
+            if (!botMember?.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                return message.reply('❌ I need the Manage Messages permission to purge messages.');
+            }
+
+            if (!args[0] || !/^\d+$/.test(args[0])) {
+                return message.reply(`Usage: ${PREFIX}purge <1-1000>`);
+            }
+
+            const amount = Number.parseInt(args[0], 10);
+            if (amount < 1 || amount > 1000) {
+                return message.reply('❌ Please provide a number between 1 and 1000.');
+            }
+
+            let remaining = amount;
+            let deletedCount = 0;
+
+            while (remaining > 0) {
+                const fetchLimit = Math.min(100, remaining + 1);
+                const fetched = await message.channel.messages.fetch({ limit: fetchLimit });
+                const deletableMessages = fetched.filter(msg => msg.id !== message.id);
+
+                if (deletableMessages.size === 0) break;
+
+                const targetBatchSize = Math.min(remaining, 100, deletableMessages.size);
+                const batch = deletableMessages.first(targetBatchSize);
+                const deleted = await message.channel.bulkDelete(batch, true);
+
+                if (deleted.size === 0) break;
+
+                deletedCount += deleted.size;
+                remaining -= deleted.size;
+            }
+
+            if (deletedCount === 0) {
+                return message.reply('⚠️ No messages were deleted. Messages older than 14 days cannot be bulk deleted.');
+            }
+
+            await message.channel.send(`✅ Deleted ${deletedCount} message${deletedCount === 1 ? '' : 's'}.`);
+        }
+    });
+
     // !help command 
     client.commands.set('help', {
         name: 'help',
